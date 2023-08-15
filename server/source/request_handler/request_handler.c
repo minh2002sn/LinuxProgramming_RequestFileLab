@@ -19,13 +19,13 @@ static req_handler_entry_t req_handler_table[] =
 
 void reqhdl_execute(int conn_fd, uint8_t request, uint8_t *buff, uint16_t size)
 {
-    printf("reqhdl_execute()");
     req_handler_entry_t *curr_entry = req_handler_table;
     while (curr_entry->command != 0)
     {
         if (curr_entry->command == request)
         {
             curr_entry->function(conn_fd, buff, size);
+            break;
         }
         else
         {

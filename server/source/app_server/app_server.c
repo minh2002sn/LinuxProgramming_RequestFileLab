@@ -111,8 +111,12 @@ void app_server_handle()
             unsigned char rx_buff[255];
             while((n = read(conn_fd, rx_buff, 255)))
             {
-                reqlstn_handle(conn_fd, rx_buff, n);
-                printf("Handle %d bytes.\n", n);
+                ret = reqlstn_handle(conn_fd, rx_buff, n);
+                if(ret)
+                {
+                    printf("Done receive a message.\n");
+                }
+                // printf("Handle %d bytes.\n", n);
             }
 
             /* Close client socket */

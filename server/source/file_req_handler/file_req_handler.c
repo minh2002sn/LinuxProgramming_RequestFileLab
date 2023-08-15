@@ -12,18 +12,30 @@
 #include "app_config.h"
 #include "error_checker.h"
 
-static llist_t *g_file_list;
+static llist_t *g_file_list = NULL;
 static uint16_t total_file_name_len = 0;
 
 static void file_list_update()
 {
     DIR *dir;
     struct dirent *entry;
+    if (g_file_list != NULL)
+        return;
+    
 
     /* Open directory */
     dir = opendir(DATA_FOLDER);
     if(dir)
     {
+        // if(g_file_list == NULL)
+        // {
+        //     g_file_list = llist_init();
+        // }
+        // else
+        // {
+
+        // }
+        
         g_file_list = llist_init();
         total_file_name_len = 0;
         while((entry = readdir(dir)) != NULL)
@@ -35,7 +47,7 @@ static void file_list_update()
                 strcpy(file_name, entry->d_name);
                 total_file_name_len += strlen(entry->d_name);
                 llist_add(g_file_list, (void *)file_name);
-                // printf("%s\n", (char *)g_file_list->head->data);
+                // printf("%s\n", (char *)entry->d_name);
             }
         }
 
@@ -69,8 +81,10 @@ void filelist_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     for(int i = 0; i < llist_get_num_node(g_file_list); i++)
     {
         char *curr_file_name = (char *)llist_get_data(g_file_list, i);
-        write(conn_fd, curr_file_name, strlen(curr_file_name));
-        write(conn_fd, "\n", 1);
+        // printf("%s\n", curr_file_name);
+        char tx_buff[255];
+        sprintf(tx_buff, "%d_%s\n", i, curr_file_name);
+        write(conn_fd, tx_buff, strlen(tx_buff));
     }
 }
 
