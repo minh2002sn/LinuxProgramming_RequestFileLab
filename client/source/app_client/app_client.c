@@ -3,13 +3,15 @@
 #include "error_checker.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h> 
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
+#include "cli_listener.h"
+#include "reply_listener.h"
 
 #define LISTEN_BACKLOG 50
 
@@ -46,36 +48,38 @@ void app_client_init(const char *ip_str, int port_no)
 void app_client_handle()
 {
     int ret = 0;
-    int recv_file_fd = 0;
+    char cli_buff[BUFF_SIZE];
     char rx_buff[BUFF_SIZE];
     int n = 0;
-    long unsigned int num_rx_byte = 0;
 
     /* Connect to server */
     ret = connect(gh_client->fd, (struct sockaddr *)&gh_client->addr, sizeof(gh_client->addr));
     ERROR_CHECK(ret, "connect()");
 
-    /* Open storing rx data file */
-    recv_file_fd = open(OUTPUT_FOLDER OUTPUT_FILE_NAME, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-    if(recv_file_fd == -1)
+    while(1)
     {
-        ret = mkdir(OUTPUT_FOLDER, 0775);
-        ERROR_CHECK(ret, "mkdir()");
-        recv_file_fd = open(OUTPUT_FOLDER OUTPUT_FILE_NAME, O_WRONLY | O_CREAT, 0666);
-    }
-    ERROR_CHECK(recv_file_fd, "open()");
+        /* Get command */
+        memset(cli_buff, 0, BUFF_SIZE);
+        printf(">> Typing command: ");
+        fgets(cli_buff, BUFF_SIZE, stdin);
+        /* Remove '\n' character */
+        cli_buff[strlen(cli_buff) - 1] = 0;
+        while(clilstn_listen(gh_client->fd, cli_buff) == -1)
+        {
+            memset(cli_buff, 0, BUFF_SIZE);
+            printf(">> Command error.\n");
+            printf(">> Typing command: ");
+            fgets(cli_buff, BUFF_SIZE, stdin);
+        }
 
-    /* Receiving data */
-    while((n = read(gh_client->fd, rx_buff, BUFF_SIZE)) > 0)
-    {
-        ret = write(recv_file_fd, rx_buff, BUFF_SIZE);
-        ERROR_CHECK(ret, "write()");
-        num_rx_byte += n;
-    }
-    ERROR_CHECK(n, "read()");
-    printf("Done receive %ld bytes.\n", num_rx_byte);
+        while((n = read(gh_client->fd, rx_buff, BUFF_SIZE)) > 0)
+        {
+            ret = replstn_handle(gh_client->fd, (uint8_t *)rx_buff, n);
+            if(ret == 1)
+                break;
+        }
 
-    close(recv_file_fd);
+    }
 }
 
 void app_client_deinit()

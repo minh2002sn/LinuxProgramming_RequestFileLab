@@ -8,7 +8,7 @@
 #endif  /* SERVER_OR_CLIENT */
 
 /* Path to database */
-#define DATA_FOLDER                 "./input/pictures"
+#define DATA_FOLDER                 "./input/pictures/"
 
 /* Data file name */
 #define DATA_FILE_NAME              "test.txt"

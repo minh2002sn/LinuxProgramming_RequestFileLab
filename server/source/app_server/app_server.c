@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/sendfile.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include <signal.h>
 #include "request_listener.h"
 
@@ -30,29 +31,30 @@ static socket_data_t *gh_server;
 
 static void grimReaper(int sig)
 {
-    int savedErrno = errno; /* waitpid() might change 'errno' */
+    int saved_errno = errno; /* waitpid() might change 'errno' */
     int child_pid = 0;
+    int status = 0;
 
-    while((child_pid = waitpid(-1, NULL, WNOHANG)) > 0)
+    while((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
     {
-        printf("Process %d terminate.\n", child_pid);
+        printf("Process [%d] terminated (errno = %d).\n", child_pid, saved_errno);
         continue;
     }
 
-    errno = savedErrno;
+    errno = saved_errno;
 }
 
 void app_server_init(int port_no)
 {
     int ret = 0;
     int opt_val = 1;
-    struct sigaction sa;
+    struct sigaction sig_act;
     
     /* Establish SIGCHILD handler */
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
-    sa.sa_handler = grimReaper;
-    ret = sigaction(SIGCHLD, &sa, NULL);
+    sigemptyset(&sig_act.sa_mask);
+    sig_act.sa_flags = SA_RESTART;
+    sig_act.sa_handler = grimReaper;
+    ret = sigaction(SIGCHLD, &sig_act, NULL);
     ERROR_CHECK(ret, "sigaction()");
 
     /* Dynamic allocate gh_server */
@@ -109,14 +111,10 @@ void app_server_handle()
             /* Handle request */
             int n = 0;
             unsigned char rx_buff[255];
+            printf("Process [%d] is handling the connection.\n", getpid());
             while((n = read(conn_fd, rx_buff, 255)))
             {
-                ret = reqlstn_handle(conn_fd, rx_buff, n);
-                if(ret)
-                {
-                    printf("Done receive a message.\n");
-                }
-                // printf("Handle %d bytes.\n", n);
+                reqlstn_handle(conn_fd, rx_buff, n);
             }
 
             /* Close client socket */

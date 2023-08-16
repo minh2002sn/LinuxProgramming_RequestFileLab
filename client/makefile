@@ -62,12 +62,12 @@ help:
 # Rule create executable file and folder holding executable file
 $(EXE): $(OBJ)
 	@mkdir -p $(BIN_DIR)
-	@gcc $^ -o $@
+	$(CC) $^ -o $@
 
 # Rule create object files and folder holding object files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_FOLDER)
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 # Clean object filess, executable files, and output files of program
 clean:

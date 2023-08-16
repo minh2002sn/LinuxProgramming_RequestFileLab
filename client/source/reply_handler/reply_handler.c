@@ -1,6 +1,6 @@
-#include "request_handler.h"
+#include "reply_handler.h"
 #include "command_header.h"
-#include "file_req_handler.h"
+#include "file_command_handler.h"
 #include "error_checker.h"
 #include <stdio.h>
 #include <unistd.h>
@@ -17,20 +17,28 @@ typedef struct
 
 static reqhdl_table_entry_t reqhdl_table[] =
     {
-        {CMD_REQ_FILE_LIST, filelist_req_handle},
-        {CMD_REQ_FILE, file_req_handle},
-        {0, error_req_handle}};
+        {CMD_REP_FILE_LIST, filelist_rep_handle},
+        // {CMD_REP_FILE, file_rep_handle},
+        {0, error_req_handle},
+};
+
+// static reqhdl_table_entry_t reqhdl_table[] =
+//     {
+//         {CMD_REP_FILE_LIST, filelist_rep_handle},
+//         {CMD_REP_FILE, file_rep_handle},
+//         {0, error_req_handle},
+// };
 
 static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
 {
     printf("Request error.\n");
     int ret = 0;
-    cmdhdr_t cmd_header = 
-    {
-        .header = CMD_HEADER,
-        .command = CMD_ERROR,
-        .data_len = 0,
-    };
+    cmdhdr_t cmd_header =
+        {
+            .header = CMD_HEADER,
+            .command = CMD_ERROR,
+            .data_len = 0,
+        };
 
     ret = write(conn_fd, (uint8_t *)&cmd_header, sizeof(cmd_header));
     ERROR_CHECK(ret, "write()");
@@ -38,7 +46,7 @@ static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     return 0;
 }
 
-void reqhdl_execute(int conn_fd, uint8_t request, uint8_t *buff, uint16_t size)
+void rephdl_execute(int conn_fd, uint8_t request, uint8_t *buff, uint16_t size)
 {
     reqhdl_table_entry_t *curr_entry = reqhdl_table;
     while (curr_entry->command != 0)
@@ -47,7 +55,6 @@ void reqhdl_execute(int conn_fd, uint8_t request, uint8_t *buff, uint16_t size)
         {
             // printf("CMD: %d\nCur: %d\n", request, curr_entry->command);
             int ret = curr_entry->function(conn_fd, buff, size);
-            printf("Done handling request.\n");
             if (ret == -1)
             {
                 error_req_handle(conn_fd, NULL, 0);

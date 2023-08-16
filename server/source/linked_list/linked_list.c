@@ -64,7 +64,12 @@ int llist_get_num_node(llist_t *list)
 {
     return list->size;
 }
- 
+
+int llist_is_empty(llist_t *list)
+{
+    return (list->size) ? 0 : 1;
+}
+
 void llist_deinit(llist_t *list)
 {
     node_t *current_node = list->head;
