@@ -29,6 +29,7 @@ typedef struct
 {
     uint8_t header;
     uint8_t command; // command_type_t
+    uint8_t type;
     uint32_t data_len;
 } __attribute__((packed)) cmdhdr_t;
 
@@ -136,7 +137,7 @@ int main(int argc, char *argv[])
     ERROR_CHECK(ret, "connect()");
 
     /* Chat with client */
-    cmdhdr_t tx_hdr_buff = {0xAA, 0x02, strlen(argv[3])};
+    cmdhdr_t tx_hdr_buff = {0xAA, 0x02, 0x01, strlen(argv[3])};
     write(server_fd, (uint8_t *)&tx_hdr_buff, sizeof(tx_hdr_buff));
     write(server_fd, (uint8_t *)argv[3], strlen(argv[3]));
 

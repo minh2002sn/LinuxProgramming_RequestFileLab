@@ -17,7 +17,7 @@
 #define OUTPUT_FOLDER               "./output/"
 
 /* Output file's name */
-#define OUTPUT_FILE_NAME            "recv_test.txt"
+#define OUTPUT_FILE_NAME            "rx_file.png"
 
 /* Enable logging socket info */
 #define ENABLE_LOG_SOCK_INFO        1

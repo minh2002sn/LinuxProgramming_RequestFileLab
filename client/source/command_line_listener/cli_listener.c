@@ -9,6 +9,11 @@ int clilstn_listen(int conn_fd, char* cmd)
     char *argv[255];
     char *token;
 
+    if(strlen(cmd) <= 1)
+    {
+        return -1;
+    }
+
     token = strtok(cmd, " ");
     while(token != NULL)
     {

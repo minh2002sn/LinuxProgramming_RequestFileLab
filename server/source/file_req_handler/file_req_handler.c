@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
-#include "command_header.h"
+#include "message_header.h"
 #include "linked_list.h"
 #include "app_config.h"
 #include "error_checker.h"
@@ -88,19 +88,20 @@ static void file_list_update()
     }
 }
 
-int filelist_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
+int filelist_req_handle(int conn_fd, uint8_t *buff, uint16_t size, ...)
 {
     int ret = 0;
-    cmdhdr_t cmd_header;
+    msg_header_t msg_header;
     int opt;
 
     /* Update list of files */
     file_list_update();
 
     /* Create header */
-    cmd_header.header = CMD_HEADER;
-    cmd_header.command = CMD_REP_FILE_LIST;
-    cmd_header.data_len = total_entry_size;
+    msg_header.header = MSG_HEADER;
+    msg_header.command = MSG_CMD_REP_FILE_LIST;
+    msg_header.type = MSG_TYPE_NORMAL;
+    msg_header.data_len = total_entry_size;
     // printf("data len: %d\n", total_entry_size);
 
     /* Enable TCP_CORK option, subsequent TCP output is corked until this option is disabled. */
@@ -109,7 +110,7 @@ int filelist_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     ERROR_CHECK(ret, "setsockopt()");
 
     /* Send header */
-    ret = write(conn_fd, (uint8_t *)&cmd_header, sizeof(cmd_header));
+    ret = write(conn_fd, (uint8_t *)&msg_header, sizeof(msg_header));
     ERROR_CHECK(ret, "write()");
 
     /* Send list of files */
@@ -127,13 +128,13 @@ int filelist_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     return 0;
 }
 
-int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
+int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size, ...)
 {
     int file_seq_no = 0;
     int test_fd = 0;
     int ret = 0;
     struct stat st;
-    cmdhdr_t cmd_header;
+    msg_header_t msg_header;
     char file_path[255];
     int opt = 1;
 
@@ -151,7 +152,8 @@ int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     {
         // printf("REQ: %s\n", buff);
         // printf("%d. %s\n", file_seq_no, llist_get_data(g_file_list, file_seq_no));
-        if(strstr(llist_get_data(g_file_list, file_seq_no), (char *)buff) != NULL)
+        char *curr_file = llist_get_data(g_file_list, file_seq_no);
+        if(strncmp(curr_file, (char *)buff, strlen(curr_file) - 1) == 0)
         {
             break;
         }
@@ -168,9 +170,10 @@ int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     ERROR_CHECK(ret, "stat()");
 
     /* Create header */
-    cmd_header.header = CMD_HEADER;
-    cmd_header.command = CMD_REP_FILE;
-    cmd_header.data_len = st.st_size;
+    msg_header.header = MSG_HEADER;
+    msg_header.command = MSG_CMD_REP_FILE;
+    msg_header.type = MSG_TYPE_FILE;
+    msg_header.data_len = st.st_size;
 
     /* Enable TCP_CORK option, subsequent TCP output is corked until this option is disabled. */
     opt = 1;
@@ -178,7 +181,7 @@ int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     ERROR_CHECK(ret, "setsockopt()");
 
     /* Send header */
-    ret = write(conn_fd, (uint8_t *)&cmd_header, sizeof(cmd_header));
+    ret = write(conn_fd, (uint8_t *)&msg_header, sizeof(msg_header));
     ERROR_CHECK(ret, "write()");
 
     /* Open file */
@@ -186,6 +189,7 @@ int file_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
     ERROR_CHECK(test_fd, "open()");
 
     /* Send fie */
+    printf("File size: %ld\n", st.st_size);
     ret = sendfile(conn_fd, test_fd, NULL, st.st_size);
     ERROR_CHECK(ret, "sendfile()");
 

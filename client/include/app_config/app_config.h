@@ -17,7 +17,7 @@
 #define OUTPUT_FOLDER               "./output/"
 
 /* Output file's name */
-#define OUTPUT_FILE_NAME            "recv_test.txt"
+#define OUTPUT_FILE_NAME            "recv_test.png"
 
 /* Enable logging socket info */
 #define ENABLE_LOG_SOCK_INFO        1
@@ -26,6 +26,6 @@
 #define ENABLE_LOOP                 1
 
 /* Buffer size for receiving and transmitting buffer */
-#define BUFF_SIZE                   255
+#define BUFF_SIZE                   1024
 
 #endif

@@ -70,6 +70,9 @@ void app_client_handle()
             printf(">> Command error.\n");
             printf(">> Typing command: ");
             fgets(cli_buff, BUFF_SIZE, stdin);
+            /* Remove '\n' character */
+            cli_buff[strlen(cli_buff) - 1] = 0;
+            // printf("");
         }
 
         while((n = read(gh_client->fd, rx_buff, BUFF_SIZE)) > 0)

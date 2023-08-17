@@ -1,13 +1,13 @@
 #include "request_handler.h"
-#include "command_header.h"
+#include "message_header.h"
 #include "file_req_handler.h"
 #include "error_checker.h"
 #include <stdio.h>
 #include <unistd.h>
 
-static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size);
+static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size, ...);
 
-typedef int (*req_handle_func_t)(int conn_fd, uint8_t *buff, uint16_t size);
+typedef int (*req_handle_func_t)(int conn_fd, uint8_t *buff, uint16_t size, ...);
 
 typedef struct
 {
@@ -17,22 +17,23 @@ typedef struct
 
 static reqhdl_table_entry_t reqhdl_table[] =
     {
-        {CMD_REQ_FILE_LIST, filelist_req_handle},
-        {CMD_REQ_FILE, file_req_handle},
+        {MSG_CMD_REQ_FILE_LIST, filelist_req_handle},
+        {MSG_CMD_REQ_FILE, file_req_handle},
         {0, error_req_handle}};
 
-static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size)
+static int error_req_handle(int conn_fd, uint8_t *buff, uint16_t size, ...)
 {
     printf("Request error.\n");
     int ret = 0;
-    cmdhdr_t cmd_header = 
+    msg_header_t msg_header = 
     {
-        .header = CMD_HEADER,
-        .command = CMD_ERROR,
+        .header = MSG_HEADER,
+        .command = MSG_CMD_ERROR,
+        .type = MSG_TYPE_NORMAL,
         .data_len = 0,
     };
 
-    ret = write(conn_fd, (uint8_t *)&cmd_header, sizeof(cmd_header));
+    ret = write(conn_fd, (uint8_t *)&msg_header, sizeof(msg_header));
     ERROR_CHECK(ret, "write()");
 
     return 0;
