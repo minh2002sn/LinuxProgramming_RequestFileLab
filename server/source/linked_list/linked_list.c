@@ -1,11 +1,12 @@
 #include "linked_list.h"
 #include <stdlib.h>
 
-typedef struct node
+typedef struct node node_t;
+struct node
 {
     void* data;
-    struct node *next;
-} node_t;
+    node_t *next;
+};
  
 struct llist
 {
@@ -25,16 +26,15 @@ void llist_add(llist_t *list, void *data)
 {
     node_t *new_node = (node_t *)malloc(sizeof(node_t));
     new_node->data = data;
-    new_node->next = (struct node *)list->head;
+    new_node->next = list->head;
     list->head = new_node;
     list->size++;
 }
  
 void *llist_pop(llist_t *list)
 {
-    if (list->size == 0) {
+    if (list->size == 0)
         return NULL;
-    }
     node_t *node_to_remove = list->head;
     void *data = node_to_remove->data;
     list->head = (node_t *)node_to_remove->next;

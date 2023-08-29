@@ -35,7 +35,7 @@ static void grimReaper(int sig)
     int child_pid = 0;
     int status = 0;
 
-    while((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
+    while ((child_pid = waitpid(-1, &status, WNOHANG)) > 0)
     {
         printf("Process [%d] terminated (errno = %d).\n", child_pid, saved_errno);
         continue;
@@ -49,7 +49,7 @@ void app_server_init(int port_no)
     int ret = 0;
     int opt_val = 1;
     struct sigaction sig_act;
-    
+
     /* Establish SIGCHILD handler */
     sigemptyset(&sig_act.sa_mask);
     sig_act.sa_flags = SA_RESTART;
@@ -82,8 +82,7 @@ void app_server_init(int port_no)
     ERROR_CHECK(ret, "bind()");
 }
 
-
-void app_server_handle()
+void app_server_loop()
 {
     /* Accept connection with client */
     struct sockaddr_in h_client_addr;
@@ -95,7 +94,7 @@ void app_server_handle()
     ret = listen(gh_server->fd, LISTEN_BACKLOG);
     ERROR_CHECK(ret, "listen()");
 
-    while(1)
+    while (1)
     {
         /* Accept connection */
         conn_fd = accept(gh_server->fd, (struct sockaddr *)&h_client_addr, (socklen_t *)&client_addr_len);
@@ -105,14 +104,14 @@ void app_server_handle()
         /* Create child process to handle request */
         int child_pid = fork();
         ERROR_CHECK(child_pid, "fork()");
-        if(child_pid == 0)
+        if (child_pid == 0)
         {
             /* Child process */
             /* Handle request */
             int n = 0;
             unsigned char rx_buff[255];
             printf("Process [%d] is handling the connection.\n", getpid());
-            while((n = read(conn_fd, rx_buff, 255)))
+            while ((n = read(conn_fd, rx_buff, 255)))
             {
                 reqlstn_handle(conn_fd, rx_buff, n);
             }
@@ -128,7 +127,6 @@ void app_server_handle()
             /* Close client socket */
             close(conn_fd);
         }
-
     }
 }
 
